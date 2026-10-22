@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>탐사자 평가록</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@500;700;800&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<style>
+/* Layout: 세션 기록철 — 시나리오마다 한 장의 기록지, 왼쪽 큰 표지 + 오른쪽 정보·평가 */
+:root{
+  --bg:#e9ecec; --paper:#f7f8f6; --ink:#16252a; --muted:#5b6a6e; --line:#cdd5d5;
+  --accent:#1f5f63; --accent-ink:#f2f7f6; --star:#c08a1e; --star-off:#cfd5d3; --danger:#a83a2c;
+  --display:"Hahmlet","Noto Serif KR",Georgia,serif;
+  --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1719; --paper:#162225; --ink:#e3ebea; --muted:#93a4a6; --line:#2a3a3d;
+  --accent:#5fb1ae; --accent-ink:#0c1a1b; --star:#e2b04a; --star-off:#34474a; --danger:#e07a68; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1719; --paper:#162225; --ink:#e3ebea; --muted:#93a4a6; --line:#2a3a3d;
+  --accent:#5fb1ae; --accent-ink:#0c1a1b; --star:#e2b04a; --star-off:#34474a; --danger:#e07a68; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+.wrap{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.25}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;border-bottom:2px solid var(--ink);padding-bottom:16px}
+.top h1{font-size:clamp(28px,5vw,42px);font-weight:800;letter-spacing:-.01em}
+.top .sub{color:var(--muted);margin:4px 0 0}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.btn{border:1px solid var(--ink);background:transparent;padding:8px 14px;border-radius:4px;cursor:pointer;font-weight:600;font-size:14px}
+.btn:hover{background:var(--ink);color:var(--paper)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{border-color:transparent;color:var(--muted);padding:4px 8px;font-weight:500;font-size:13px}
+.btn.ghost:hover{background:transparent;color:var(--ink);text-decoration:underline}
+.btn.danger{color:var(--danger)}
+.btn:disabled{opacity:.5;cursor:default}
+.index{display:flex;flex-wrap:wrap;gap:8px}
+.index button{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:4px 12px;cursor:pointer;font-size:13px}
+.index button:hover{border-color:var(--accent);color:var(--accent)}
+.notice{background:var(--paper);border:1px dashed var(--line);border-radius:6px;padding:28px;text-align:center;color:var(--muted)}
+.notice h2{color:var(--ink);font-size:22px;margin-bottom:6px}
+
+/* scenario sheet */
+.sheet{background:var(--paper);border:1px solid var(--line);border-radius:6px;display:grid;grid-template-columns:minmax(0,400px) minmax(0,1fr);gap:28px;padding:24px;scroll-margin-top:16px}
+@media (max-width:820px){.sheet{grid-template-columns:minmax(0,1fr);padding:16px;gap:18px}}
+.cover{position:sticky;top:16px;align-self:start;aspect-ratio:3/4;max-width:100%;width:100%;border-radius:4px;overflow:hidden;background:var(--bg);border:1px solid var(--line)}
+@media (max-width:820px){.cover{position:static;width:min(100%,360px);justify-self:center}}
+.cover img{width:100%;height:100%;object-fit:cover;display:block}
+.cover .ph{width:100%;height:100%;display:grid;place-items:center;font-family:var(--display);font-size:56px;font-weight:800;color:var(--muted);
+  background:repeating-linear-gradient(135deg,transparent 0 14px,color-mix(in srgb,var(--line) 55%,transparent) 14px 15px)}
+.info{display:flex;flex-direction:column;gap:18px;min-width:0}
+.head{display:flex;flex-direction:column;gap:6px}
+.head h2{font-size:clamp(22px,3vw,30px);font-weight:700}
+.author{color:var(--muted);font-size:14px}
+.author b{color:var(--ink);font-weight:600}
+.synopsis{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.adm{display:flex;gap:4px;flex-wrap:wrap;margin-top:-6px}
+
+/* difficulty summary */
+.diff{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:center;border-block:1px solid var(--line);padding-block:14px}
+.diff .num{font-family:var(--display);font-size:44px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.diff .num small{font-size:16px;color:var(--muted);font-weight:500}
+.diff .meta{font-size:13px;color:var(--muted);margin-top:4px}
+.dist{display:flex;flex-direction:column;gap:3px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.dist .row{display:grid;grid-template-columns:52px minmax(0,1fr) 22px;gap:8px;align-items:center}
+.dist .bar{height:6px;background:var(--star-off);border-radius:3px;overflow:hidden}
+.dist .bar i{display:block;height:100%;background:var(--star)}
+.dist .row span:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.stars{position:relative;display:inline-block;letter-spacing:2px;line-height:1;color:var(--star-off);white-space:nowrap}
+.stars .fill{position:absolute;inset:0 auto 0 0;overflow:hidden;color:var(--star)}
+.stars.lg{font-size:20px}
+
+/* reviews */
+.rv-title{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.rv-title h3{font-size:17px}
+.reviews{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;max-height:340px;overflow-y:auto;border:1px solid var(--line);border-radius:4px}
+.reviews li{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+.reviews li:last-child{border-bottom:0}
+.reviews .r-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.reviews .nick{font-weight:600}
+.reviews .tag{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.reviews .date{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:auto}
+.reviews p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.reviews .empty{color:var(--muted);text-align:center;padding:20px}
+
+/* review form */
+form.rv{display:flex;flex-direction:column;gap:10px;background:var(--bg);border-radius:4px;padding:14px}
+.pick{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pick .lbl{font-size:13px;color:var(--muted);min-width:44px}
+.starpick{display:inline-flex}
+.starpick button{background:none;border:0;padding:0 2px;font-size:26px;line-height:1;cursor:pointer;color:var(--star-off)}
+.starpick button.on{color:var(--star)}
+.pick .word{font-family:var(--mono);font-size:12px;color:var(--star)}
+input[type=text],textarea{width:100%;background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:8px 10px}
+input[type=text]:focus,textarea:focus{border-color:var(--accent);outline:none}
+textarea{resize:vertical;min-height:72px}
+.frow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.frow input{flex:1 1 160px}
+.msg{font-size:13px;color:var(--muted)}
+.msg.err{color:var(--danger)}
+
+/* editor dialog */
+.overlay{position:fixed;inset:0;background:color-mix(in srgb,var(--ink) 45%,transparent);display:grid;place-items:center;z-index:20;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.dialog{background:var(--paper);border-radius:6px;width:min(560px,100%);max-height:100%;overflow-y:auto;padding:22px;display:flex;flex-direction:column;gap:12px}
+.dialog h2{font-size:22px}
+.dialog label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.dialog .prev{aspect-ratio:3/4;width:min(100%,220px);align-self:center;max-width:100%;border:1px dashed var(--line);border-radius:4px;overflow:hidden;display:grid;place-items:center;color:var(--muted);font-size:13px;background:var(--bg)}
+.dialog .prev img{width:100%;height:100%;object-fit:cover}
+.dialog .actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:in .35s ease both}@keyframes in{from{transform:translateY(6px)}to{transform:none}}}
+</style>
+
+<style>
+.foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:14px}
+.top .tools{display:flex;gap:8px;flex-wrap:wrap}
+.gm-badge{font-family:var(--mono);font-size:12px;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:2px 10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Session Log · 플레이 후기</div>
+      <h1>탐사자 평가록</h1>
+      <p class="sub" id="sub">시나리오를 마친 탐사자들이 체감 난이도와 한마디를 남기는 곳</p>
+    </div>
+    <div class="tools">
+      <span class="gm-badge" id="gmBadge" hidden>GM 모드</span>
+      <button class="btn primary" id="addBtn" type="button" hidden>+ 시나리오 올리기</button>
+    </div>
+  </header>
+  <nav class="index" id="index" aria-label="시나리오 목록"></nav>
+  <main id="list" style="display:flex;flex-direction:column;gap:28px">
+    <div class="notice"><h2>기록지를 불러오는 중</h2>잠시만 기다려 주세요.</div>
+  </main>
+  <footer class="foot">
+    <span id="synced">&nbsp;</span>
+    <span><button class="btn ghost" id="refreshBtn" type="button">새로고침</button><button class="btn ghost" id="gmBtn" type="button">GM 로그인</button></span>
+  </footer>
+</div>
+
+<script>
+/* ▼▼▼ 구글 Apps Script 웹 앱 URL(…/exec)을 따옴표 안에 붙여 넣으세요 ▼▼▼ */
+const API_URL = "";
+/* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
+
+const DIFF_WORD = ["", "쉬움", "무난함", "보통", "어려움", "극악"];
+const state = { scenarios: [], reviews: [], gm: null, drafts: {}, nick: null, sig: "", pending: false };
+const $ = (s, r = document) => r.querySelector(s);
+function h(tag, attrs = {}, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === "class") el.className = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (k === "text") el.textContent = v;
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const k of kids.flat()) if (k != null && k !== false) el.append(k instanceof Node ? k : document.createTextNode(k));
+  return el;
+}
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch { return null; } },
+  set(k,v){ try { localStorage.setItem(k,v); } catch {} },
+  sget(k){ try { return sessionStorage.getItem(k); } catch { return null; } },
+  sset(k,v){ try { v == null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k,v); } catch {} },
+};
+function myTokens(){ try { return JSON.parse(store.get("trpg-tokens") || "{}"); } catch { return {}; } }
+function saveToken(reviewId, token){ const t = myTokens(); t[reviewId] = token; store.set("trpg-tokens", JSON.stringify(t)); }
+function newToken(){ const a = new Uint8Array(16); crypto.getRandomValues(a); return Array.from(a, b => b.toString(16).padStart(2, "0")).join(""); }
+function fmtDate(t){ if(!t) return ""; const d = new Date(Number(t)); return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getDate()).padStart(2,"0")}`; }
+function starsEl(v, cls = "") {
+  const pct = Math.max(0, Math.min(100, (v / 5) * 100));
+  return h("span", { class: "stars " + cls, "aria-label": `난이도 ${v.toFixed(1)} / 5` }, "★★★★★", h("span", { class: "fill", style: `width:${pct}%` }, "★★★★★"));
+}
+/* 시트에 적은 표지 주소를 화면에 쓸 수 있는 주소로 바꿈 (구글 드라이브 공유 링크 지원) */
+function coverUrl(c) {
+  c = String(c || "").trim(); if (!c) return "";
+  const m = c.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]{20,})/);
+  if (m) return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w1200`;
+  if (/^[\w-]{25,}$/.test(c)) return `https://drive.google.com/thumbnail?id=${c}&sz=w1200`;
+  return c;
+}
+
+/* ---------- 서버 통신 ---------- */
+async function api(body) {
+  const res = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || "요청을 처리하지 못했어요.");
+  return data;
+}
+async function load(force) {
+  if (!API_URL) {
+    $("#list").replaceChildren(h("div", { class: "notice" }, h("h2", { text: "아직 스프레드시트와 연결되지 않았어요" }), "index.html 위쪽의 API_URL 에 Apps Script 웹 앱 주소를 붙여 넣어 주세요."));
+    return;
+  }
+  try {
+    const res = await fetch(API_URL + "?t=" + Date.now());
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error);
+    const sig = JSON.stringify([data.scenarios, data.reviews]);
+    state.scenarios = (data.scenarios || []).slice().sort((a, b) => Number(a.createdAt || 0) - Number(b.createdAt || 0));
+    state.reviews = (data.reviews || []).map(r => ({ ...r, stars: Number(r.stars) })).filter(r => r.stars >= 1 && r.stars <= 5);
+    $("#synced").textContent = "마지막 동기화 " + new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
+    if (force || sig !== state.sig) { state.sig = sig; requestRender(); }
+  } catch (err) {
+    if (!state.sig) $("#list").replaceChildren(h("div", { class: "notice" }, h("h2", { text: "기록지를 불러오지 못했어요" }), "인터넷 연결이나 Apps Script 배포 설정(액세스: 모든 사용자)을 확인해 주세요."));
+    $("#synced").textContent = "동기화 실패 · 잠시 후 다시 시도해요";
+  }
+}
+/* 입력 중일 때는 화면을 다시 그리지 않고, 입력이 끝나면 그림 */
+function requestRender() {
+  const a = document.activeElement;
+  if (a && $("#list").contains(a) && (a.tagName === "INPUT" || a.tagName === "TEXTAREA")) { state.pending = true; return; }
+  state.pending = false; render();
+}
+$("#list").addEventListener("focusout", () => setTimeout(() => { if (state.pending) requestRender(); }, 0));
+
+/* ---------- 화면 ---------- */
+function render() {
+  const list = $("#list"), index = $("#index");
+  list.replaceChildren(); index.replaceChildren();
+  $("#addBtn").hidden = !state.gm; $("#gmBadge").hidden = !state.gm;
+  $("#gmBtn").textContent = state.gm ? "GM 로그아웃" : "GM 로그인";
+  if (!state.scenarios.length) {
+    list.append(h("div", { class: "notice" },
+      h("h2", { text: "아직 올라온 시나리오가 없어요" }),
+      state.gm ? "오른쪽 위 ‘시나리오 올리기’로 표지와 줄거리를 등록하면 탐사자들이 평가를 남길 수 있어요." : "GM이 시나리오를 올리면 여기에 기록지가 생깁니다."));
+    $("#sub").textContent = "시나리오를 마친 탐사자들이 체감 난이도와 한마디를 남기는 곳";
+    return;
+  }
+  $("#sub").textContent = `시나리오 ${state.scenarios.length}편 · 남겨진 평가 ${state.reviews.length}개`;
+  for (const s of state.scenarios) {
+    index.append(h("button", { type: "button", onclick: () => document.getElementById("s-" + s.id)?.scrollIntoView({ behavior: "smooth" }) }, s.title || "제목 없음"));
+    list.append(sheet(s));
+  }
+}
+
+function sheet(s) {
+  const rv = state.reviews.filter(r => String(r.scenarioId) === String(s.id)).sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
+  const avg = rv.length ? rv.reduce((a, r) => a + r.stars, 0) / rv.length : 0;
+  const counts = [0, 0, 0, 0, 0, 0]; rv.forEach(r => counts[r.stars]++);
+  const max = Math.max(1, ...counts);
+  const tokens = myTokens();
+  const src = coverUrl(s.cover);
+  const ph = () => h("div", { class: "ph" }, String(s.title || "?")[0]);
+
+  const cover = h("div", { class: "cover" },
+    src ? h("img", { src, alt: `${s.title} 표지`, referrerpolicy: "no-referrer", onerror: e => e.target.replaceWith(ph()) }) : ph());
+
+  const diff = h("div", { class: "diff" },
+    h("div", {},
+      h("div", { class: "num" }, rv.length ? avg.toFixed(1) : "–", h("small", {}, " / 5")),
+      starsEl(avg, "lg"),
+      h("div", { class: "meta" }, rv.length ? `평균 난이도 · 탐사자 ${rv.length}명 · ${DIFF_WORD[Math.round(avg)]}` : "아직 평가 없음")),
+    h("div", { class: "dist", "aria-label": "난이도 분포" },
+      [5, 4, 3, 2, 1].map(n => h("div", { class: "row" }, h("span", {}, "★".repeat(n)), h("span", { class: "bar" }, h("i", { style: `width:${counts[n] / max * 100}%` })), h("span", {}, String(counts[n]))))));
+
+  const ul = h("ul", { class: "reviews" });
+  if (!rv.length) ul.append(h("li", { class: "empty" }, "첫 번째 평가를 남겨 주세요."));
+  for (const r of rv) {
+    const mine = !!tokens[r.id];
+    ul.append(h("li", {},
+      h("div", { class: "r-top" },
+        starsEl(r.stars), h("span", { class: "tag" }, DIFF_WORD[r.stars]),
+        h("span", { class: "nick" }, r.nickname || "익명 탐사자"),
+        h("span", { class: "date" }, fmtDate(r.createdAt)),
+        (mine || state.gm) ? h("button", { class: "btn ghost danger", type: "button", onclick: e => removeReview(r, e.currentTarget) }, "삭제") : null),
+      r.comment ? h("p", {}, String(r.comment)) : null));
+  }
+
+  return h("article", { class: "sheet", id: "s-" + s.id },
+    cover,
+    h("div", { class: "info" },
+      h("div", { class: "head" },
+        h("div", { class: "eyebrow" }, "Scenario"),
+        h("h2", {}, s.title || "제목 없음"),
+        h("div", { class: "author" }, "작가 ", h("b", {}, s.author || "미상"))),
+      state.gm ? h("div", { class: "adm" },
+        h("button", { class: "btn ghost", type: "button", onclick: () => openEditor(s) }, "수정"),
+        h("button", { class: "btn ghost danger", type: "button", onclick: e => removeScenario(s, e.currentTarget) }, "시나리오 삭제")) : null,
+      s.synopsis ? h("p", { class: "synopsis" }, String(s.synopsis)) : null,
+      diff,
+      h("div", { class: "rv-title" }, h("h3", {}, "탐사자 평가"), h("span", { class: "msg" }, `${rv.length}개`)),
+      ul,
+      reviewForm(s)));
+}
+
+function reviewForm(s) {
+  const d = state.drafts[s.id] || (state.drafts[s.id] = { stars: 0, comment: "" });
+  const word = h("span", { class: "word" }, d.stars ? DIFF_WORD[d.stars] : "별을 눌러 선택");
+  const btns = [1, 2, 3, 4, 5].map(n => h("button", { type: "button", role: "radio", "aria-checked": String(d.stars === n), "aria-label": `${n}점 ${DIFF_WORD[n]}`, class: n <= d.stars ? "on" : "",
+    onclick: () => { d.stars = n; paint(n); },
+    onmouseenter: () => paint(n, true), onmouseleave: () => paint(d.stars) }, "★"));
+  function paint(n, hover) { btns.forEach((b, i) => { b.classList.toggle("on", i < n); b.setAttribute("aria-checked", String(!hover && i + 1 === n)); }); word.textContent = n ? DIFF_WORD[n] : "별을 눌러 선택"; }
+  const nick = h("input", { type: "text", id: "nick-" + s.id, maxlength: "24", placeholder: "닉네임", "aria-label": "닉네임" });
+  nick.value = state.nick ?? store.get("trpg-nick") ?? "";
+  nick.addEventListener("input", () => state.nick = nick.value);
+  const ta = h("textarea", { id: "cmt-" + s.id, maxlength: "1000", placeholder: "세션 후기, 체감 난이도 이유 등 (스포일러는 조심!)", "aria-label": "댓글" });
+  ta.value = d.comment; ta.addEventListener("input", () => d.comment = ta.value);
+  const msg = h("span", { class: "msg", role: "status" });
+  const submit = h("button", { class: "btn primary", type: "submit" }, "평가 남기기");
+  return h("form", { class: "rv", onsubmit: async e => {
+      e.preventDefault();
+      if (!d.stars) { msg.className = "msg err"; msg.textContent = "난이도 별점을 먼저 골라 주세요."; return; }
+      if (!nick.value.trim()) { msg.className = "msg err"; msg.textContent = "닉네임을 적어 주세요."; nick.focus(); return; }
+      submit.disabled = true; msg.className = "msg"; msg.textContent = "저장 중…";
+      store.set("trpg-nick", nick.value.trim());
+      const token = newToken();
+      try {
+        const res = await api({ action: "addReview", scenarioId: s.id, stars: d.stars, nickname: nick.value.trim(), comment: ta.value.trim(), token });
+        saveToken(res.review.id, token);
+        state.drafts[s.id] = { stars: 0, comment: "" };
+        document.activeElement?.blur();
+        await load(true);
+      } catch (err) {
+        submit.disabled = false; msg.className = "msg err"; msg.textContent = err.message || "저장하지 못했어요. 잠시 후 다시 눌러 주세요.";
+      }
+    } },
+    h("div", { class: "pick" }, h("span", { class: "lbl" }, "난이도"), h("span", { class: "starpick", role: "radiogroup", "aria-label": "난이도" }, btns), word),
+    h("div", { class: "frow" }, nick),
+    ta,
+    h("div", { class: "frow", style: "justify-content:space-between" }, msg, submit));
+}
+
+/* ---------- 삭제 ---------- */
+function armConfirm(btn, label, fn) {
+  if (btn.dataset.armed) { fn(); return; }
+  const orig = btn.textContent; btn.dataset.armed = "1"; btn.textContent = label;
+  setTimeout(() => { if (btn.isConnected) { delete btn.dataset.armed; btn.textContent = orig; } }, 3500);
+}
+function removeReview(r, btn) {
+  armConfirm(btn, "정말 삭제?", async () => {
+    btn.disabled = true; btn.textContent = "삭제 중…";
+    try { await api({ action: "deleteReview", id: r.id, token: myTokens()[r.id] || "", password: state.gm || "" }); await load(true); }
+    catch (err) { btn.disabled = false; btn.textContent = "삭제 실패"; btn.title = err.message; }
+  });
+}
+function removeScenario(s, btn) {
+  armConfirm(btn, "평가까지 모두 삭제할까요? 한 번 더 누르기", async () => {
+    btn.disabled = true; btn.textContent = "삭제 중…";
+    try { await api({ action: "deleteScenario", id: s.id, password: state.gm }); await load(true); }
+    catch (err) { btn.disabled = false; btn.textContent = "삭제 실패"; btn.title = err.message; }
+  });
+}
+
+/* ---------- 표지 이미지 줄이기 (업로드 용량 절약) ---------- */
+function shrinkImage(file, maxSide = 1400) {
+  return new Promise((resolve, reject) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      const dataUrl = c.toDataURL("image/jpeg", 0.88);
+      resolve({ data: dataUrl.split(",")[1], mime: "image/jpeg", preview: dataUrl });
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("이미지를 읽지 못했어요.")); };
+    img.src = url;
+  });
+}
+
+/* ---------- 대화상자 ---------- */
+function dialog(...kids) {
+  const ov = h("div", { class: "overlay", onclick: e => { if (e.target === ov) ov.remove(); } }, ...kids);
+  document.body.append(ov);
+  return ov;
+}
+document.addEventListener("keydown", e => { if (e.key === "Escape") document.querySelector(".overlay")?.remove(); });
+
+function openGM() {
+  if (state.gm) { state.gm = null; store.sset("trpg-gm", null); render(); return; }
+  const pw = h("input", { type: "password", id: "gm-pw", autocomplete: "current-password", style: "width:100%;background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:8px 10px" });
+  const msg = h("span", { class: "msg", role: "status" });
+  const ok = h("button", { class: "btn primary", type: "submit" }, "로그인");
+  const ov = dialog(h("form", { class: "dialog", onsubmit: async e => {
+      e.preventDefault(); if (!pw.value) return;
+      ok.disabled = true; msg.className = "msg"; msg.textContent = "확인 중…";
+      try { await api({ action: "checkPassword", password: pw.value }); state.gm = pw.value; store.sset("trpg-gm", pw.value); ov.remove(); render(); }
+      catch (err) { ok.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
+    } },
+    h("h2", {}, "GM 로그인"),
+    h("label", {}, "Apps Script에 적은 GM 비밀번호", pw),
+    h("div", { class: "actions" }, msg, h("button", { class: "btn", type: "button", onclick: () => ov.remove() }, "취소"), ok)));
+  pw.focus();
+}
+
+function openEditor(s) {
+  const editing = !!s;
+  let cover = s?.cover || "";
+  const prev = h("div", { class: "prev" }, cover ? h("img", { src: coverUrl(cover), alt: "", referrerpolicy: "no-referrer" }) : "표지 이미지 (세로가 긴 3:4 비율 권장)");
+  const file = h("input", { type: "file", id: "ed-file", accept: "image/png,image/jpeg,image/webp,image/gif" });
+  const coverIn = h("input", { type: "text", id: "ed-cover", placeholder: "또는 이미지 주소·구글 드라이브 공유 링크" }); coverIn.value = cover;
+  const title = h("input", { type: "text", id: "ed-title", maxlength: "80" }); title.value = s?.title || "";
+  const author = h("input", { type: "text", id: "ed-author", maxlength: "60" }); author.value = s?.author || "";
+  const syn = h("textarea", { id: "ed-syn", maxlength: "3000", style: "min-height:140px" }); syn.value = s?.synopsis || "";
+  const msg = h("span", { class: "msg", role: "status" });
+  const save = h("button", { class: "btn primary", type: "submit" }, editing ? "저장" : "올리기");
+  let uploading = false;
+  coverIn.addEventListener("change", () => {
+    cover = coverIn.value.trim();
+    prev.replaceChildren(cover ? h("img", { src: coverUrl(cover), alt: "", referrerpolicy: "no-referrer" }) : "표지 이미지 (세로가 긴 3:4 비율 권장)");
+  });
+  file.addEventListener("change", async () => {
+    const f = file.files[0]; if (!f) return;
+    uploading = true; save.disabled = true; msg.className = "msg"; msg.textContent = "표지 올리는 중… (몇 초 걸려요)";
+    try {
+      const img = await shrinkImage(f);
+      prev.replaceChildren(h("img", { src: img.preview, alt: "" }));
+      const res = await api({ action: "uploadCover", password: state.gm, data: img.data, mime: img.mime, name: f.name });
+      cover = res.cover; coverIn.value = cover; msg.textContent = "표지를 올렸어요.";
+    } catch (err) { msg.className = "msg err"; msg.textContent = err.message || "표지를 올리지 못했어요."; }
+    finally { uploading = false; save.disabled = false; }
+  });
+  const ov = dialog(h("form", { class: "dialog", onsubmit: async e => {
+      e.preventDefault(); if (uploading) return;
+      if (!title.value.trim()) { msg.className = "msg err"; msg.textContent = "시나리오 이름을 적어 주세요."; return; }
+      save.disabled = true; msg.className = "msg"; msg.textContent = "저장 중…";
+      try {
+        await api({ action: "saveScenario", password: state.gm, id: s?.id || "", title: title.value.trim(), author: author.value.trim(), synopsis: syn.value.trim(), cover: coverIn.value.trim() });
+        ov.remove(); await load(true);
+      } catch (err) { save.disabled = false; msg.className = "msg err"; msg.textContent = err.message; }
+    } },
+    h("h2", {}, editing ? "시나리오 수정" : "시나리오 올리기"),
+    prev,
+    h("label", {}, "표지 이미지", file, coverIn),
+    h("label", {}, "시나리오 이름", title),
+    h("label", {}, "작가", author),
+    h("label", {}, "줄거리", syn),
+    h("div", { class: "actions" }, msg, h("button", { class: "btn", type: "button", onclick: () => ov.remove() }, "취소"), save)));
+  title.focus();
+}
+
+$("#addBtn").addEventListener("click", () => openEditor(null));
+$("#gmBtn").addEventListener("click", openGM);
+$("#refreshBtn").addEventListener("click", () => load(true));
+
+state.gm = store.sget("trpg-gm");
+load(true);
+setInterval(() => { if (!document.hidden) load(false); }, 30000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) load(false); });
+</script>
+</body>
+</html>
